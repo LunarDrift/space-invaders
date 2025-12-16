@@ -9,7 +9,8 @@ ALIEN_SCALING = 0.6
 WINDOW_WIDTH = 800
 WINDOW_HEIGHT = 600
 WINDOW_TITLE = "Alien Invasion - Python Arcade"
-# Player movement and shooting constants
+# Player configuration
+PLAYER_LIVES = 3
 MOVEMENT_SPEED = 300
 BULLET_SPEED = 300
 SHOOT_COOLDOWN = 0.2  # 0.2 seconds
@@ -22,8 +23,8 @@ ALIEN_START_X = 100
 ALIEN_START_Y = WINDOW_HEIGHT - 70
 ALIEN_BULLET_SPEED = 200
 ALIEN_SHOOT_COOLDOWN = 3.0  # 3 seconds
-MIN_COOLDOWN = 1.0 # Minimum cooldown for alien shooting
-MAX_FLEET_SPEED = 100 
+MIN_COOLDOWN = 1.5 # Minimum cooldown for alien shooting
+MAX_FLEET_SPEED = 85  # Max speed for alien fleet 
 
 
 # -----------------------------------------------#
@@ -40,6 +41,8 @@ class Player(arcade.Sprite):
         self.shoot_cooldown = 0 # start at 0 so player can shoot immediately
         self.can_shoot = True
         self.speed = MOVEMENT_SPEED
+
+        self.lives = PLAYER_LIVES
 
     def update(self, delta_time: float = 1/60):
         # Update shoot cooldown timer
@@ -76,13 +79,7 @@ class Bullet(arcade.Sprite):
 
 #------------------- Alien Class -------------------#
 class Alien(arcade.Sprite):
-    """Alien enemy sprite.
-    Should be responsible for:
-    - Position
-    - Size/Sprite
-    - Alive/Dead State
-    - Drawing itself
-    - Moving when told to move"""
+    """Alien enemy sprite."""
     def __init__(self):
         super().__init__("assets/top-alien.png", scale=ALIEN_SCALING)
 
@@ -106,10 +103,11 @@ class GameView(arcade.View):
         self.player_bullet_list = arcade.SpriteList()
         self.alien_bullet_list = arcade.SpriteList()
 
-        # Set up the player info
+        # ------------ Set up the player info ------------ #
         self.player_sprite = None
+        self.score = 0
 
-        # Fleet movement info
+        # ------------ Alien Fleet info ------------ #
         self.fleet_direction = 1    # 1 = right; -1 = left
         self.fleet_speed = 40       # pixels per second
         self.fleet_drop = 30        # pixels to drop when changing direction
@@ -127,9 +125,11 @@ class GameView(arcade.View):
 
     def setup(self):
         """Set up the game and initialize the player and alien fleet."""
+        # ------------ Clear existing sprites ------------ #
         self.player_list.clear()
         self.alien_list.clear()
         self.player_bullet_list.clear()
+        self.alien_bullet_list.clear()
 
         # ------------ Set up player ------------ #
         self.player_sprite = Player()
@@ -138,7 +138,7 @@ class GameView(arcade.View):
         self.player_list.append(self.player_sprite)
 
 
-        # ------------ Set up aliens------------ #
+        # ------------ Set up aliens ------------ #
         for col in range(ALIEN_COLUMNS):
             for row in range(ALIEN_ROWS):
                 alien = Alien()
@@ -148,16 +148,38 @@ class GameView(arcade.View):
 
     def on_draw(self):
         """Render the screen."""
-        # Clear the screen
+        # ------------ Clear the screen ------------ #
         self.clear()
 
-        # Draw the background image
+        # ------------ Draw the background image ------------ #
         arcade.draw_texture_rect(
             self.background_img,
             arcade.LBWH(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT),
-            alpha=135,
+            alpha=120,
         )
-        # Draw all the sprites.
+
+        # ------------ Draw the score and lives ------------ #
+        # Using Text objects for better performance
+        lives = arcade.Text(
+            f"LIVES: {self.player_sprite.lives}",
+            3,
+            WINDOW_HEIGHT - 30,
+            arcade.color.WHITE,
+            10,
+            font_name="Pixeled",
+        )
+        score = arcade.Text(
+            f"SCORE: {self.score}",
+            WINDOW_WIDTH - 120,
+            WINDOW_HEIGHT - 30,
+            arcade.color.WHITE,
+            10,
+            font_name="Pixeled",
+        )
+        lives.draw()
+        score.draw()
+
+        # ------------ Draw all the sprites ------------ #
         self.player_list.draw()
         self.alien_list.draw()
         self.player_bullet_list.draw()
@@ -168,10 +190,9 @@ class GameView(arcade.View):
         - `-1` = left
         - `1` = right
         - `0` = no movement"""
-        # Calculate speed based on the keys pressed
+        # ------------ Calculate direction based on the keys pressed ------------ #
         # change_x = direction, -1 = left; 1 = right
         self.player_sprite.change_x = 0
-
         if self.left_pressed and not self.right_pressed:
             self.player_sprite.change_x = -1
         elif self.right_pressed and not self.left_pressed:
@@ -179,19 +200,19 @@ class GameView(arcade.View):
 
     def on_update(self, delta_time):
         """Movement and game logic"""
-        # Update all sprites
+        # ------------ Update all sprites ------------ #
         self.player_list.update()
         self.player_bullet_list.update()
         self.alien_list.update()
         self.alien_bullet_list.update()
 
-#-------------- Player Movement --------------#
+# ------------ Player Movement ------------ #
         self.player_sprite.center_x += (
             self.player_sprite.change_x * self.player_sprite.speed * delta_time
         )
         self.clamp_player_to_screen()
 
-#-------------- Bullet Movement and Collision --------------#
+# ------------ Bullet Movement and Collision --------------#
         for bullet in self.player_bullet_list:
             # Movement
             bullet.center_y += bullet.speed * delta_time
@@ -202,22 +223,34 @@ class GameView(arcade.View):
             # Collision with aliens
             hits = arcade.check_for_collision_with_list(bullet, self.alien_list)
             for alien in hits:
+                # TODO: score increases in value based on row; higher rows = more points
+                self.score += 10
                 alien.remove_from_sprite_lists()
                 bullet.remove_from_sprite_lists()
                 break  # Bullet can only hit one alien
+            if len(self.alien_list) == 0:
+                # All aliens destroyed, reset fleet
+                self.reset_fleet()
 
-#-------------- Alien Fleet Movement and Shooting --------------#
+# ------------ Alien Fleet Movement and Shooting --------------#
         self.update_fleet(delta_time)
         
 # ----------------------------------------------------------------------------
 
-        # Check for collision between aliens and player
+        # ------------ Check for collision between aliens and player ------------ #
         if arcade.check_for_collision_with_list(self.player_sprite, self.alien_list):
-            pass # Handle player-alien collision (e.g., end game, reduce life, etc.)
+            # Reduce player lives
+                self.player_sprite.lives -= 1
+                if self.player_sprite.lives <= 0:
+                    view = GameOverView()
+                    self.window.show_view(view)
+
+        # ------------ Check for alien invasion ------------ #
+        self.invasion()
 
     def on_key_press(self, key, modifiers):
         """Called whenever a key is pressed."""
-        # ---- Handle player movement ---- #
+        # ------------ Handle player movement ------------ #
         if key == arcade.key.A:
             self.left_pressed = True
             self.update_player_direction()
@@ -225,20 +258,20 @@ class GameView(arcade.View):
             self.right_pressed = True
             self.update_player_direction()
 
-        # ---- Handle shooting ---- #
+        # ------------ Handle shooting ------------ #
         elif key == arcade.key.SPACE:
             # Add the bullet to the player's bullet list
             bullet = self.player_sprite.shoot_bullet()
             if bullet:
                 self.player_bullet_list.append(bullet)
         
-        # ---- Handle quitting the game ---- #
+        # ------------ Handle quitting the game ------------ #
         if key == arcade.key.ESCAPE:
             arcade.close_window()
 
     def on_key_release(self, key, modifiers):
         """Called when the user releases a key."""
-
+        # ------------ Handle player movement ------------ #
         if key == arcade.key.A:
             self.left_pressed = False
             self.update_player_direction()
@@ -248,6 +281,7 @@ class GameView(arcade.View):
 
 #------------------- Helper Methods -------------------#
     def clamp_player_to_screen(self):
+        """Keep the player on the screen."""
         if self.player_sprite.left < 0:
             self.player_sprite.left = 0
         elif self.player_sprite.right > WINDOW_WIDTH:
@@ -312,14 +346,95 @@ class GameView(arcade.View):
                 bullet.remove_from_sprite_lists()
                 continue
 
-            # Check for collision with player
+            # Check for alien bullet collision with player
             if arcade.check_for_collision(bullet, self.player_sprite):
                 bullet.remove_from_sprite_lists()
-                pass # Handle player hit (e.g., end game, reduce life, etc.)
+                # Reduce player lives
+                self.player_sprite.lives -= 1
+                if self.player_sprite.lives <= 0:
+                    view = GameOverView(final_score=self.score)
+                    self.window.show_view(view)
+
+    def invasion(self):
+        """Handle alien invasion (aliens reaching the bottom)."""
+        # If an alien reaches the bottom, end the game
+        for alien in self.alien_list:
+            if alien.bottom <= 0:
+                view = GameOverView(final_score=self.score)
+                self.window.show_view(view)
+                break
+
+    def reset_fleet(self):
+        """Reset the alien fleet to its initial state."""
+        self.alien_list.clear()
+        for col in range(ALIEN_COLUMNS):
+            for row in range(ALIEN_ROWS):
+                alien = Alien()
+                alien.center_x = ALIEN_START_X + col * ALIEN_X_SPACING
+                alien.center_y = ALIEN_START_Y - row * ALIEN_Y_SPACING
+                self.alien_list.append(alien)
+        self.fleet_direction = 1
+        self.current_fleet_speed = self.fleet_speed
 
 
 # -----------------------------------------------------------------------#
 
+# -------------- Game Over View Class -------------- #
+class GameOverView(arcade.View):
+    """View to show when the game is over."""
+    def __init__(self, final_score):
+        super().__init__()
+        self.score = final_score
+
+    def on_show(self):
+        """Called when switching to this view."""
+        arcade.set_background_color(arcade.color.BLACK)
+
+    def on_draw(self):
+        """Draw the game over screen."""
+        self.clear()
+        # Using Text objects for better performance
+        game_over = arcade.Text(
+            "GAME OVER",
+            WINDOW_WIDTH / 2,
+            WINDOW_HEIGHT / 2,
+            arcade.color.RED,
+            font_size=40,
+            font_name="Pixeled",
+            anchor_x="center",
+        )
+        instruction = arcade.Text(
+            "PRESS ESC TO QUIT OR R TO RESTART",
+            WINDOW_WIDTH / 2,
+            WINDOW_HEIGHT / 2 - 100,
+            arcade.color.WHITE,
+            font_size=20,
+            font_name="Pixeled",
+            anchor_x="center",
+        )
+        
+        final_score = arcade.Text(
+            f"FINAL SCORE: {self.score}",
+            WINDOW_WIDTH / 2,
+            WINDOW_HEIGHT / 2 - 50,
+            arcade.color.WHITE,
+            font_size=20,
+            font_name="Pixeled",
+            anchor_x="center",
+        )
+
+        game_over.draw()
+        instruction.draw()
+        final_score.draw()
+
+    def on_key_press(self, key, modifiers):
+        """Handle key presses."""
+        if key == arcade.key.ESCAPE:
+            arcade.close_window()
+        elif key == arcade.key.R:
+            game_view = GameView()
+            game_view.setup()
+            self.window.show_view(game_view)
 
 # ------------------- Main Function -------------------#
 def main():
