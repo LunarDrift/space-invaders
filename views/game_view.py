@@ -43,6 +43,9 @@ class GameView(arcade.View):
         # ----------- Load background image ------------ #
         self.background_img = arcade.load_texture("assets/bg2.jpg")
 
+        # ----------- Load lives icon texture ------------ #
+        self.lives_texture = arcade.load_texture("assets/Sprite-Ship.png")
+
 
     def setup(self):
         """Set up the game and initialize the player and alien fleet."""
@@ -87,12 +90,12 @@ class GameView(arcade.View):
         #     10,
         #     font_name="Pixeled",
         # )
-        lives_texture = arcade.load_texture("assets/Sprite-Ship.png")
+        
         for i in range(self.player_sprite.lives):
             x = 20 + i * (32 * LIVES_ICON_SCALING + 5) # 32 is the original width of the ship sprite + 5 pixels spacing
             y = 15
             arcade.draw_texture_rect(
-                lives_texture,
+                self.lives_texture,
                 arcade.XYWH(x, y, 32 * LIVES_ICON_SCALING, 32 * LIVES_ICON_SCALING)
             )
 
@@ -148,12 +151,13 @@ class GameView(arcade.View):
             if bullet.bottom > WINDOW_HEIGHT:
                 bullet.remove_from_sprite_lists()
                 continue
-        # Check for collision with aliens
-        self.check_collisions()
 
         if len(self.alien_list) == 0:
             # All aliens destroyed, reset fleet and clear bullets
             self.reset()
+        
+        # Check for collisions
+        self.check_collisions()
 
 # ------------ Alien Fleet Movement and Shooting --------------#
         self.update_fleet(delta_time)
@@ -206,9 +210,9 @@ class GameView(arcade.View):
         for col in range(ALIEN_COLUMNS):
             for row in range(ALIEN_ROWS):
                 # Determine alien type based on row
-                if row < 2:
+                if row < TOP_ALIEN_ROWS:
                     alien_type = AlienType.TOP
-                elif row < 4:
+                elif row < TOP_ALIEN_ROWS + MID_ALIEN_ROWS:
                     alien_type = AlienType.MID
                 else:
                     alien_type = AlienType.BOTTOM
@@ -277,9 +281,6 @@ class GameView(arcade.View):
             if bullet.top < 0:
                 bullet.remove_from_sprite_lists()
                 continue
-
-            # Check for alien bullet collision with player
-            self.check_collisions()
 
     
     def update_fleet_speed(self):
