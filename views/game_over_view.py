@@ -46,7 +46,7 @@ class GameOverView(arcade.View):
         )
 
         arcade.draw_texture_rect(
-            arcade.load_texture("assets/bg2.jpg"),
+            arcade.load_texture("assets/bg.jpg"),
             arcade.LBWH(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT),
             alpha=120,
         )
