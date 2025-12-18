@@ -26,7 +26,7 @@ A remake of the classic Space Invaders arcade game, built in Python using the Ar
 
 ```
 space-invaders-python/
-├── assets/                 # Sprite images, background, and sounds
+├── assets/                 # Sprite images, and background image
 ├── sprites/                # Player, Alien, UFO, and HitSplat classes
 ├── enums/                  # Enum for alien types
 ├── settings.py             # Game constants and settings
