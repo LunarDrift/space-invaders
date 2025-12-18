@@ -1,5 +1,7 @@
 # Space Invaders (Python Arcade)
 
+Game 3 in the [20 Games Challenge](https://20_games_challenge.gitlab.io/challenge/)
+
 A remake of the classic Space Invaders arcade game, built in Python using the Arcade library. Shoot down alien fleets, dodge enemy bullets, and try to gain the highest score you can.
 
 ![Gameplay](examples/gameplay.png)
