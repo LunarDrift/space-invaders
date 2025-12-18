@@ -29,7 +29,9 @@ space-invaders-python/
 ├── assets/                 # Sprite images, and background image
 ├── sprites/                # Player, Alien, UFO, and HitSplat classes
 ├── enums/                  # Enum for alien types
+├── views/                  # GameView and GameOverView classes
 ├── settings.py             # Game constants and settings
+├── window.py               # View Manager class to switch between GameView and GameOverView
 ├── main.py                 # Entry point for the game
 └── README.md               # This file
 ```
