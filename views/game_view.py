@@ -2,8 +2,9 @@ import random
 import arcade
 from sprites.player import Player
 from sprites.alien import Alien
-from sprites.bullet import Bullet
 from sprites.ufo import UFO
+from sprites.hitsplat import HitSplat
+
 from settings import *
 
 
@@ -21,6 +22,7 @@ class GameView(arcade.View):
         self.player_bullet_list = arcade.SpriteList()
         self.alien_bullet_list = arcade.SpriteList()
         self.ufo_list = arcade.SpriteList()
+        self.hitsplat_list = arcade.SpriteList()
 
         # ------------ Set up the player info ------------ #
         self.player_sprite = None
@@ -51,6 +53,7 @@ class GameView(arcade.View):
         self.player_bullet_list.clear()
         self.alien_bullet_list.clear()
         self.ufo_list.clear()
+        self.hitsplat_list.clear()
 
         # ------------ Set up player ------------ #
         self.player_sprite = Player()
@@ -108,6 +111,7 @@ class GameView(arcade.View):
         self.player_bullet_list.draw(pixelated=True)
         self.alien_bullet_list.draw(pixelated=True)
         self.ufo_list.draw(pixelated=True)
+        self.hitsplat_list.draw(pixelated=True)
 
 
     def update_player_direction(self):
@@ -131,6 +135,7 @@ class GameView(arcade.View):
         self.player_bullet_list.update()
         self.alien_list.update()
         self.alien_bullet_list.update()
+        self.hitsplat_list.update()
 
 # ------------ Player Movement ------------ #
         self.player_sprite.center_x += (
@@ -142,15 +147,19 @@ class GameView(arcade.View):
         for bullet in self.player_bullet_list:
             # Movement
             bullet.center_y += bullet.speed * delta_time
-
+            # Remove bullet if off-screen
             if bullet.bottom > WINDOW_HEIGHT:
                 bullet.remove_from_sprite_lists()
                 continue
-            # Collision with aliens
+            # Collision with alien bullets
             hits = arcade.check_for_collision_with_list(bullet, self.alien_list)
             for alien in hits:
                 # TODO: score increases in value based on row; higher rows = more points
                 self.score += 10
+                # Hitsplat at alien position
+                hitsplat = HitSplat(alien.center_x, alien.center_y)
+                self.hitsplat_list.append(hitsplat)
+
                 alien.remove_from_sprite_lists()
                 bullet.remove_from_sprite_lists()
                 break  # Bullet can only hit one alien
@@ -159,6 +168,10 @@ class GameView(arcade.View):
             ufo_hits = arcade.check_for_collision_with_list(bullet, self.ufo_list)
             for ufo in ufo_hits:
                 self.score += 100  # UFO gives more points
+                # Hitsplat at UFO position
+                hitsplat = HitSplat(ufo.center_x, ufo.center_y)
+                self.hitsplat_list.append(hitsplat)
+
                 ufo.remove_from_sprite_lists()
                 bullet.remove_from_sprite_lists()
                 break  # Bullet can only hit one UFO
@@ -291,6 +304,9 @@ class GameView(arcade.View):
             # Check for alien bullet collision with player
             if arcade.check_for_collision(bullet, self.player_sprite):
                 bullet.remove_from_sprite_lists()
+                # Show hitsplat at player position
+                hitsplat = HitSplat(self.player_sprite.center_x, self.player_sprite.center_y)
+                self.hitsplat_list.append(hitsplat)
                 # Reduce player lives
                 self.player_sprite.lives -= 1
                 if self.player_sprite.lives <= 0:
