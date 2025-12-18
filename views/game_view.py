@@ -5,7 +5,6 @@ from sprites.alien import Alien
 from sprites.bullet import Bullet
 from sprites.ufo import UFO
 from settings import *
-from .game_over_view import GameOverView
 
 
 
@@ -183,8 +182,7 @@ class GameView(arcade.View):
             # Reduce player lives
                 self.player_sprite.lives -= 1
                 if self.player_sprite.lives <= 0:
-                    view = GameOverView(final_score=self.score)
-                    self.window.show_view(view)
+                    self.window.show_game_over()
 
         # ------------ Check for alien invasion ------------ #
         self.invasion()
@@ -296,16 +294,14 @@ class GameView(arcade.View):
                 # Reduce player lives
                 self.player_sprite.lives -= 1
                 if self.player_sprite.lives <= 0:
-                    view = GameOverView(final_score=self.score)
-                    self.window.show_view(view)
+                    self.window.show_game_over()
 
     def invasion(self):
         """Handle alien invasion (aliens reaching the bottom)."""
         # If an alien reaches the bottom, end the game
         for alien in self.alien_list:
             if alien.bottom <= 0:
-                view = GameOverView(final_score=self.score)
-                self.window.show_view(view)
+                self.window.show_game_over()
                 break
 
     def reset(self):
