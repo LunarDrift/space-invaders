@@ -15,6 +15,9 @@ class Player(arcade.Sprite):
         self.lives = PLAYER_LIVES
 
     def update(self, delta_time: float = 1/60):
+        # Player movement
+        self.center_x += self.change_x * self.speed * delta_time
+        self.clamp_player_to_screen()
         # Update shoot cooldown timer
         if not self.can_shoot:
             self.shoot_cooldown -= delta_time
@@ -33,3 +36,10 @@ class Player(arcade.Sprite):
             return bullet
         else:
             return None
+        
+    def clamp_player_to_screen(self):
+        """Keep the player on the screen."""
+        if self.left < 0:
+            self.left = 0
+        elif self.right > WINDOW_WIDTH:
+            self.right = WINDOW_WIDTH

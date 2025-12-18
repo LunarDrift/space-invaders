@@ -7,14 +7,14 @@ class HitSplat(arcade.Sprite):
     def __init__(self, position_x, position_y):
         """Initialize the hitsplat"""
         # Call the parent Sprite constructor
-        super().__init__("assets/hitsplat.png", scale=1)
+        super().__init__("assets/Sprite-Hitsplat.png", scale=1)
 
         # Set the position
         self.center_x = position_x
         self.center_y = position_y
 
         # Set a timer for how long the hitsplat should be visible
-        self.lifetime = 0.1  # seconds
+        self.lifetime = 0.06  # seconds
         self.elapsed_time = 0.0
 
     def update(self, delta_time: float = 1 / 60):

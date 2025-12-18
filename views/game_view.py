@@ -2,6 +2,7 @@ import random
 import arcade
 from sprites.player import Player
 from sprites.alien import Alien
+from enums.alien_type import AlienType
 from sprites.ufo import UFO
 from sprites.hitsplat import HitSplat
 
@@ -13,7 +14,6 @@ class GameView(arcade.View):
     """Main game class."""
 
     def __init__(self):
-        # Call the parent class initializer
         super().__init__()
 
         # ------------ Sprite lists ------------ #
@@ -33,15 +33,14 @@ class GameView(arcade.View):
         self.fleet_speed = ALIEN_SPEED       # pixels per second
         self.fleet_drop = ALIEN_DROP        # pixels to drop when changing direction
         self.alien_shoot_timer = ALIEN_SHOOT_COOLDOWN
-        self.initial_alien_count = len(self.alien_list)
-        self.current_fleet_speed = self.fleet_speed * ((ALIEN_ROWS*ALIEN_COLUMNS) / len(self.alien_list)) if len(self.alien_list) > 0 else self.fleet_speed
+        self.initial_alien_count = 0
+        self.current_fleet_speed = self.fleet_speed
 
-
-        # Track the current state of what key is pressed
+        # ----------- Input tracking ------------ #
         self.left_pressed = False
         self.right_pressed = False
 
-        # Set the background image
+        # ----------- Load background image ------------ #
         self.background_img = arcade.load_texture("assets/bg2.jpg")
 
 
@@ -58,17 +57,12 @@ class GameView(arcade.View):
         # ------------ Set up player ------------ #
         self.player_sprite = Player()
         self.player_sprite.center_x = WINDOW_WIDTH // 2
-        self.player_sprite.center_y = 35
+        self.player_sprite.center_y = 50
         self.player_list.append(self.player_sprite)
 
 
         # ------------ Set up aliens ------------ #
-        for col in range(ALIEN_COLUMNS):
-            for row in range(ALIEN_ROWS):
-                alien = Alien()
-                alien.center_x = ALIEN_START_X + col * ALIEN_X_SPACING
-                alien.center_y = ALIEN_START_Y - row * ALIEN_Y_SPACING
-                self.alien_list.append(alien)
+        self.create_fleet()
 
 
     def on_draw(self):
@@ -88,7 +82,7 @@ class GameView(arcade.View):
         lives = arcade.Text(
             f"LIVES: {self.player_sprite.lives}",
             3,
-            WINDOW_HEIGHT - 30,
+            10,
             arcade.color.WHITE,
             10,
             font_name="Pixeled",
@@ -137,48 +131,20 @@ class GameView(arcade.View):
         self.alien_bullet_list.update()
         self.hitsplat_list.update()
 
-# ------------ Player Movement ------------ #
-        self.player_sprite.center_x += (
-            self.player_sprite.change_x * self.player_sprite.speed * delta_time
-        )
-        self.clamp_player_to_screen()
 
-# ------------ Bullet Movement and Collision --------------#
+# ------------ Player Bullet Movement --------------#
         for bullet in self.player_bullet_list:
-            # Movement
             bullet.center_y += bullet.speed * delta_time
             # Remove bullet if off-screen
             if bullet.bottom > WINDOW_HEIGHT:
                 bullet.remove_from_sprite_lists()
                 continue
-            # Collision with alien bullets
-            hits = arcade.check_for_collision_with_list(bullet, self.alien_list)
-            for alien in hits:
-                # TODO: score increases in value based on row; higher rows = more points
-                self.score += 10
-                # Hitsplat at alien position
-                hitsplat = HitSplat(alien.center_x, alien.center_y)
-                self.hitsplat_list.append(hitsplat)
+        # Check for collision with aliens
+        self.check_collisions()
 
-                alien.remove_from_sprite_lists()
-                bullet.remove_from_sprite_lists()
-                break  # Bullet can only hit one alien
-
-            # Check for UFO collision
-            ufo_hits = arcade.check_for_collision_with_list(bullet, self.ufo_list)
-            for ufo in ufo_hits:
-                self.score += 100  # UFO gives more points
-                # Hitsplat at UFO position
-                hitsplat = HitSplat(ufo.center_x, ufo.center_y)
-                self.hitsplat_list.append(hitsplat)
-
-                ufo.remove_from_sprite_lists()
-                bullet.remove_from_sprite_lists()
-                break  # Bullet can only hit one UFO
-
-            if len(self.alien_list) == 0:
-                # All aliens destroyed, reset fleet and clear bullets
-                self.reset()
+        if len(self.alien_list) == 0:
+            # All aliens destroyed, reset fleet and clear bullets
+            self.reset()
 
 # ------------ Alien Fleet Movement and Shooting --------------#
         self.update_fleet(delta_time)
@@ -187,15 +153,6 @@ class GameView(arcade.View):
         if random.random() < 0.001:  # Adjust probability as needed
             self.spawn_ufo()
         self.ufo_list.update()
-
-# ----------------------------------------------------------------------------
-
-        # ------------ Check for collision between aliens and player ------------ #
-        if arcade.check_for_collision_with_list(self.player_sprite, self.alien_list):
-            # Reduce player lives
-                self.player_sprite.lives -= 1
-                if self.player_sprite.lives <= 0:
-                    self.window.show_game_over()
 
         # ------------ Check for alien invasion ------------ #
         self.invasion()
@@ -234,13 +191,26 @@ class GameView(arcade.View):
             self.update_player_direction()
 
 
-    #------------------- Helper Methods -------------------#
-    def clamp_player_to_screen(self):
-        """Keep the player on the screen."""
-        if self.player_sprite.left < 0:
-            self.player_sprite.left = 0
-        elif self.player_sprite.right > WINDOW_WIDTH:
-            self.player_sprite.right = WINDOW_WIDTH
+    #------------------- Helper Methods -------------------#    
+    def create_fleet(self):
+        """Create the alien fleet."""
+        for col in range(ALIEN_COLUMNS):
+            for row in range(ALIEN_ROWS):
+                # Determine alien type based on row
+                if row < 2:
+                    alien_type = AlienType.TOP
+                elif row < 4:
+                    alien_type = AlienType.MID
+                else:
+                    alien_type = AlienType.BOTTOM
+                # Create and position alien
+                alien = Alien(alien_type)
+                alien.center_x = ALIEN_START_X + col * ALIEN_X_SPACING
+                alien.center_y = ALIEN_START_Y - row * ALIEN_Y_SPACING
+                self.alien_list.append(alien)
+
+        self.initial_alien_count = len(self.alien_list)
+
 
     def move_fleet(self, delta_time):
         """Move the alien fleet."""
@@ -258,16 +228,14 @@ class GameView(arcade.View):
                 alien.center_y -= self.fleet_drop
 
     def update_fleet(self, delta_time):
-        """- Calculate fleet speed based on the number of remaining aliens.
+        """Update the alien fleet movement and shooting.
+
         - Move the fleet horizontally and drop when it reaches screen edges.
         - Update alien shooting timer and handle shooting.
         - Move alien bullets and check for collisions with the player."""
-        # Calculate fleet speed based on remaining aliens
-        if len(self.alien_list) > 0:
-            self.current_fleet_speed = self.fleet_speed * ((ALIEN_ROWS*ALIEN_COLUMNS) / len(self.alien_list))
-            self.current_fleet_speed = min(self.current_fleet_speed, MAX_FLEET_SPEED)
-        else:
-            self.current_fleet_speed = 0
+
+        # Update fleet speed based on remaining aliens
+        self.update_fleet_speed()
         # Move the fleet using updated speed
         self.move_fleet(delta_time)
         # Dynamic cooldown for alien shooting (less aliens = faster shooting)
@@ -302,15 +270,16 @@ class GameView(arcade.View):
                 continue
 
             # Check for alien bullet collision with player
-            if arcade.check_for_collision(bullet, self.player_sprite):
-                bullet.remove_from_sprite_lists()
-                # Show hitsplat at player position
-                hitsplat = HitSplat(self.player_sprite.center_x, self.player_sprite.center_y)
-                self.hitsplat_list.append(hitsplat)
-                # Reduce player lives
-                self.player_sprite.lives -= 1
-                if self.player_sprite.lives <= 0:
-                    self.window.show_game_over()
+            self.check_collisions()
+
+    
+    def update_fleet_speed(self):
+        """Recalculate the fleet speed dynamically based on remaining aliens."""
+        if len(self.alien_list) > 0:
+            self.current_fleet_speed = min(self.fleet_speed * (self.initial_alien_count / len(self.alien_list)), MAX_FLEET_SPEED)
+        else:
+            self.current_fleet_speed = 0
+
 
     def invasion(self):
         """Handle alien invasion (aliens reaching the bottom)."""
@@ -326,15 +295,15 @@ class GameView(arcade.View):
         self.alien_list.clear()
         self.player_bullet_list.clear()
         self.alien_bullet_list.clear()
+        
         # Recreate the alien fleet
-        for col in range(ALIEN_COLUMNS):
-            for row in range(ALIEN_ROWS):
-                alien = Alien()
-                alien.center_x = ALIEN_START_X + col * ALIEN_X_SPACING
-                alien.center_y = ALIEN_START_Y - row * ALIEN_Y_SPACING
-                self.alien_list.append(alien)
+        self.create_fleet()
+
+        # Reset fleet parameters
         self.fleet_direction = 1
-        self.current_fleet_speed = self.fleet_speed
+        self.update_fleet_speed()
+
+        # Reset alien shoot timer
         self.alien_shoot_timer = ALIEN_SHOOT_COOLDOWN
 
     def spawn_ufo(self):
@@ -342,3 +311,48 @@ class GameView(arcade.View):
         direction = random.choice([-1, 1])
         ufo = UFO(direction)
         self.ufo_list.append(ufo)
+
+
+    def check_collisions(self):
+        # Player bullet collision with aliens
+        for bullet in self.player_bullet_list:
+                hits = arcade.check_for_collision_with_list(bullet, self.alien_list)
+                for alien in hits:
+                    # Increase score based on alien type
+                    self.score += alien.alien_type.score
+                    # Hitsplat at alien position
+                    hitsplat = HitSplat(alien.center_x, alien.center_y)
+                    self.hitsplat_list.append(hitsplat)
+
+                    alien.remove_from_sprite_lists()
+                    bullet.remove_from_sprite_lists()
+                    break  # Bullet can only hit one alien
+
+                # Check for UFO collision
+                ufo_hits = arcade.check_for_collision_with_list(bullet, self.ufo_list)
+                for ufo in ufo_hits:
+                    self.score += 100  # UFO gives more points
+                    # Hitsplat at UFO position
+                    self.hitsplat_list.append(HitSplat(ufo.center_x, ufo.center_y))
+                    ufo.remove_from_sprite_lists()
+                    bullet.remove_from_sprite_lists()
+                    break  # Bullet can only hit one UFO
+
+        # Alien bullets vs player
+        for bullet in self.alien_bullet_list:
+            if arcade.check_for_collision(bullet, self.player_sprite):
+                    bullet.remove_from_sprite_lists()
+                    # Show hitsplat at player position
+                    hitsplat = HitSplat(self.player_sprite.center_x, self.player_sprite.center_y)
+                    self.hitsplat_list.append(hitsplat)
+                    # Reduce player lives
+                    self.player_sprite.lives -= 1
+                    if self.player_sprite.lives <= 0:
+                        self.window.show_game_over()
+
+        # Player vs aliens
+        if arcade.check_for_collision_with_list(self.player_sprite, self.alien_list):
+                # Reduce player lives
+                    self.player_sprite.lives -= 1
+                    if self.player_sprite.lives <= 0:
+                        self.window.show_game_over()
