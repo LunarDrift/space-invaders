@@ -46,6 +46,11 @@ class GameView(arcade.View):
         # ----------- Load lives icon texture ------------ #
         self.lives_texture = arcade.load_texture("assets/Sprite-Ship.png")
 
+        # ----------- Load SFX ------------ #
+        self.shoot_sound = arcade.load_sound("assets/sfx/Shoot24.wav")
+        self.explosion_sound = arcade.load_sound("assets/sfx/Boom75.wav")
+        self.player_hit_sound = arcade.load_sound("assets/sfx/Hit61.wav")
+
 
     def setup(self):
         """Set up the game and initialize the player and alien fleet."""
@@ -188,6 +193,8 @@ class GameView(arcade.View):
             bullet = self.player_sprite.shoot_bullet()
             if bullet:
                 self.player_bullet_list.append(bullet)
+                # Play shooting sound
+                arcade.play_sound(self.shoot_sound)
         
         # ------------ Handle quitting the game ------------ #
         if key == arcade.key.ESCAPE:
@@ -332,8 +339,9 @@ class GameView(arcade.View):
                     # Increase score based on alien type
                     self.score += alien.alien_type.score
                     # Hitsplat at alien position
-                    hitsplat = HitSplat(alien.center_x, alien.center_y)
-                    self.hitsplat_list.append(hitsplat)
+                    self.hitsplat_list.append(HitSplat(alien.center_x, alien.center_y))
+                    # Play explosion sound
+                    arcade.play_sound(self.explosion_sound)
 
                     alien.remove_from_sprite_lists()
                     bullet.remove_from_sprite_lists()
@@ -342,9 +350,12 @@ class GameView(arcade.View):
                 # Check for UFO collision
                 ufo_hits = arcade.check_for_collision_with_list(bullet, self.ufo_list)
                 for ufo in ufo_hits:
-                    self.score += 100  # UFO gives more points
+                    self.score += 100  # UFO gives extra points
                     # Hitsplat at UFO position
                     self.hitsplat_list.append(HitSplat(ufo.center_x, ufo.center_y))
+                    # Play explosion sound
+                    arcade.play_sound(self.explosion_sound)
+
                     ufo.remove_from_sprite_lists()
                     bullet.remove_from_sprite_lists()
                     break  # Bullet can only hit one UFO
@@ -354,8 +365,9 @@ class GameView(arcade.View):
             if arcade.check_for_collision(bullet, self.player_sprite):
                     bullet.remove_from_sprite_lists()
                     # Show hitsplat at player position
-                    hitsplat = HitSplat(self.player_sprite.center_x, self.player_sprite.center_y)
-                    self.hitsplat_list.append(hitsplat)
+                    self.hitsplat_list.append(HitSplat(self.player_sprite.center_x, self.player_sprite.center_y))
+                    # Play player hit sound
+                    arcade.play_sound(self.player_hit_sound)
                     # Reduce player lives
                     self.player_sprite.lives -= 1
                     if self.player_sprite.lives <= 0:
@@ -365,5 +377,10 @@ class GameView(arcade.View):
         if arcade.check_for_collision_with_list(self.player_sprite, self.alien_list):
                 # Reduce player lives
                     self.player_sprite.lives -= 1
+                    # Show hitsplat at player position
+                    self.hitsplat_list.append(HitSplat(self.player_sprite.center_x, self.player_sprite.center_y))
+                    # Play player hit sound
+                    arcade.play_sound(self.player_hit_sound)
+                    # Check for game over
                     if self.player_sprite.lives <= 0:
                         self.window.show_game_over()
