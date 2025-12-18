@@ -41,7 +41,7 @@ class GameView(arcade.View):
         self.right_pressed = False
 
         # ----------- Load background image ------------ #
-        self.background_img = arcade.load_texture("assets/bg2.jpg")
+        self.background_img = arcade.load_texture("assets/bg.jpg")
 
         # ----------- Load lives icon texture ------------ #
         self.lives_texture = arcade.load_texture("assets/Sprite-Ship.png")
@@ -90,7 +90,8 @@ class GameView(arcade.View):
         #     10,
         #     font_name="Pixeled",
         # )
-        
+
+        # Draw ship icons to represent lives
         for i in range(self.player_sprite.lives):
             x = 20 + i * (32 * LIVES_ICON_SCALING + 5) # 32 is the original width of the ship sprite + 5 pixels spacing
             y = 15
