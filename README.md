@@ -4,8 +4,7 @@ Game 3 in the [20 Games Challenge](https://20_games_challenge.gitlab.io/challeng
 
 A remake of the classic Space Invaders arcade game, built in Python using the Arcade library. Shoot down alien fleets, dodge enemy bullets, and try to gain the highest score you can.
 
-![Gameplay](examples/gameplay.png)
-![Game Over](examples/gameover.png)
+![Gameplay Example Gif](examples/gameplay2.gif)
 
 ### Features
 - Player-controlled ship with smooth horizontal movement
@@ -17,6 +16,7 @@ A remake of the classic Space Invaders arcade game, built in Python using the Ar
 - Aliens shoot bullets that can hit the player
 - UFOs appear randomly for bonus points
 - Score tracking and lives
+- Custom SFX for shooting, alien hits, and player hits
 
 ### Controls
 - **A:**  Move left
@@ -28,12 +28,14 @@ A remake of the classic Space Invaders arcade game, built in Python using the Ar
 
 ```
 space-invaders-python/
-├── assets/                 # Sprite images, and background image
+├── assets/
+│   ├── sfx/                # Sound effects (laser, explosion, etc.)
+│   └── ...                 # Sprite images and background image
 ├── sprites/                # Player, Alien, UFO, and HitSplat classes
 ├── enums/                  # Enum for alien types
 ├── views/                  # GameView and GameOverView classes
 ├── settings.py             # Game constants and settings
-├── window.py               # View Manager class to switch between GameView and GameOverView
+├── window.py               # ViewManager class to switch between GameView and GameOverView
 ├── main.py                 # Entry point for the game
 └── README.md               # This file
 ```
@@ -43,3 +45,4 @@ space-invaders-python/
 - Original game concept: [Space Invaders](https://en.wikipedia.org/wiki/Space_Invaders)
 - Python Arcade library:  https://api.arcade.academy/en/stable/
 - Sprite Assets made in [Aseprite](https://www.aseprite.org/), based on original game sprites
+- SFX made using [bfxr](https://www.bfxr.net/)
