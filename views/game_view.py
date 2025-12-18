@@ -57,7 +57,7 @@ class GameView(arcade.View):
         # ------------ Set up player ------------ #
         self.player_sprite = Player()
         self.player_sprite.center_x = WINDOW_WIDTH // 2
-        self.player_sprite.center_y = 50
+        self.player_sprite.center_y = 60
         self.player_list.append(self.player_sprite)
 
 
@@ -79,14 +79,23 @@ class GameView(arcade.View):
 
         # ------------ Draw the score and lives ------------ #
         # Using Text objects for better performance
-        lives = arcade.Text(
-            f"LIVES: {self.player_sprite.lives}",
-            3,
-            10,
-            arcade.color.WHITE,
-            10,
-            font_name="Pixeled",
-        )
+        # lives = arcade.Text(
+        #     "LIVES:",
+        #     3,
+        #     10,
+        #     arcade.color.WHITE,
+        #     10,
+        #     font_name="Pixeled",
+        # )
+        lives_texture = arcade.load_texture("assets/Sprite-Ship.png")
+        for i in range(self.player_sprite.lives):
+            x = 20 + i * (32 * LIVES_ICON_SCALING + 5) # 32 is the original width of the ship sprite + 5 pixels spacing
+            y = 15
+            arcade.draw_texture_rect(
+                lives_texture,
+                arcade.XYWH(x, y, 32 * LIVES_ICON_SCALING, 32 * LIVES_ICON_SCALING)
+            )
+
         score = arcade.Text(
             f"SCORE: {self.score}",
             WINDOW_WIDTH // 2,
@@ -96,7 +105,7 @@ class GameView(arcade.View):
             font_name="Pixeled",
             anchor_x="center",
         )
-        lives.draw()
+        # lives.draw()
         score.draw()
 
         # ------------ Draw all the sprites ------------ #

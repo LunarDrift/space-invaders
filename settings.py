@@ -7,7 +7,8 @@ WINDOW_HEIGHT = 600
 WINDOW_TITLE = "Alien Invasion - Python Arcade"
 # Player configuration
 PLAYER_LIVES = 3
-MOVEMENT_SPEED = 300
+LIVES_ICON_SCALING = 0.95
+MOVEMENT_SPEED = 200
 BULLET_SPEED = 300
 SHOOT_COOLDOWN = 0.2  # 0.2 seconds
 # Alien fleet configuration
