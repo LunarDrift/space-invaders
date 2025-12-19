@@ -26,7 +26,7 @@ A remake of the classic Space Invaders arcade game, built in Python using the Ar
 - **Escape:**  Quit game
 
 ### How to Run
-##### Requirements:
+#### Requirements:
 - Python 3.10+
 - Arcade Library
 
@@ -49,7 +49,7 @@ python main.py
 ### Project Structure
 
 ```
-space-invaders-python/
+space-invaders/
 ├── assets/
 │   ├── sfx/                # Sound effects (laser, explosion, etc.)
 │   └── ...                 # Sprite images and background image
