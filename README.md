@@ -1,6 +1,6 @@
 # Space Invaders (Python Arcade)
 
-Game 3 in the [20 Games Challenge](https://20_games_challenge.gitlab.io/challenge/)
+Game #3 in the [20 Games Challenge](https://20_games_challenge.gitlab.io/challenge/)
 
 A remake of the classic Space Invaders arcade game, built in Python using the Arcade library. Shoot down alien fleets, dodge enemy bullets, and try to gain the highest score you can.
 
@@ -15,7 +15,8 @@ A remake of the classic Space Invaders arcade game, built in Python using the Ar
 - Aliens move as a fleet, dropping down when they hit the screen edges
 - Aliens shoot bullets that can hit the player
 - UFOs appear randomly for bonus points
-- Score tracking and lives
+- Score tracking
+- Remaining lives displayed as ship icons
 - Custom SFX for shooting, alien hits, and player hits
 
 ### Controls
@@ -23,6 +24,27 @@ A remake of the classic Space Invaders arcade game, built in Python using the Ar
 - **D:**  Move right
 - **Space:**  Shoot
 - **Escape:**  Quit game
+
+### How to Run
+##### Requirements:
+- Python 3.10+
+- Arcade Library
+
+1. Clone the repository:
+```bash
+git clone https://github.com/LunarDrift/space-invaders.git
+cd space-invaders
+```
+
+2. Install dependencies:
+```bash
+pip install arcade
+```
+
+3. Run the game:
+```bash
+python main.py
+```
 
 ### Project Structure
 
